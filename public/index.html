@@ -77,7 +77,7 @@
     }
 
     function initialize() {
-      fetch("./dist/fileindex.json")
+      fetch("./fileindex.json")
         .then(result => result.json())
         .then(result => {
           var lines = result
