@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "husky": "^4.2.5",
     "live-server": "^1.2.1"
   }
 }
