@@ -1,0 +1,107 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Numenera notes</title>
+  <meta name="description" content="Personal notes for learning numenera">
+  <meta name="author" content="SitePoint">
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+</head>
+
+<body>
+  <div class="container padding">
+      <div class="row">
+          <div class="col-3">
+            <div class="sticky-top py-3">
+              <ul class="card py-3">
+                <li><b>Content</b></li>
+                <ul id="content-nav">
+                  <li><a href="#">Link one</a></li>
+                  <li><a href="#">Link two</a></li>
+                </ul>
+                <li><b>Pages</b></li>
+                <ul id="pages-nav">
+                  <li><a href="#">Link one</a></li>
+                  <li><a href="#">Link two</a></li>
+                </ul>
+              </ul>
+            </div>
+          </div>
+          <div id="content" class="col-9"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var cache = {};
+
+    /**
+     * @param markdown {string}
+     */
+    function setPageByMarkdown(markdown) {
+      var converter = new showdown.Converter({tables: true});
+
+      var lines = markdown
+        .split("\n")
+        .filter(line => line.startsWith('#'))
+        .map(line => ({
+          label: line.replace(/# |#/g, ''),
+          value: line.replace(/# |#| /g, '').toLowerCase()
+        }))
+        .map(lineObject => `<li><a href="#${lineObject.value}">${lineObject.label}</a></li>`)
+        .reduce((reducer, newElement) => reducer + newElement, '');
+
+      document.getElementById("content-nav").innerHTML = lines
+      document.getElementById("content").innerHTML = converter.makeHtml(markdown);
+    }
+
+    /**
+     * @param fileName {string}
+     */
+    function getMarkdownFile(fileName) {
+      if (cache.hasOwnProperty(fileName)) {
+        setPageByMarkdown(cache[fileName]);
+        return;
+      }
+
+      fetch(fileName)
+        .then(result => result.text())
+        .then(markdown => {
+          cache[fileName] = markdown;
+          setPageByMarkdown(markdown);
+        })
+    }
+
+    function initialize() {
+      fetch("./dist/fileindex.json")
+        .then(result => result.json())
+        .then(result => {
+          var lines = result
+            .fileIndex
+            .map(file => `<li><a href="#${file}" class="page-nav">${file}</a></li>`)
+            .reduce((reducer, newElement) => reducer + newElement, '');
+
+          document.getElementById("pages-nav").innerHTML = lines
+          var anchors = document.getElementsByClassName('page-nav');
+          for(var i = 0; i < anchors.length; i++) {
+            var anchor = anchors[i];
+            anchor.onclick = function(event) {
+              try {
+                getMarkdownFile('./md/' + event.target.href.split('#')[1]);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        });
+
+      getMarkdownFile("./md/characters.md");
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js" onload="initialize()"></script>
+</body>
+</html>
